@@ -1,0 +1,32 @@
+{
+  "4383": {
+    "hypothesized_motif": "Charged Turn Motif",
+    "description": "A sequence motif characterized by a high local concentration of charged residues, often forming a structural turn or hairpin in proteins.",
+    "reasoning": "The sequence window contains multiple charged residues (E, K, Q) surrounding the peak activation site, suggesting a propensity for forming a turn or flexible region due to charge interactions. This could correlate with a motif that aids in protein flexibility or interaction specificity where charged residues play a critical role."
+  },
+  "9934": {
+    "hypothesized_motif": "Positively-Charged Helix Cap",
+    "description": "A sequence pattern likely forming an alpha-helix, stabilized by a positively-charged residue at the capping position.",
+    "reasoning": "The sequence features a prominent positively-charged arginine (R), which is a well-known helix former and stabilizer when at or near a capping position. Its presence ensures the charge interaction can stabilize the formation of an alpha-helix. Surrounding residues also suggest a propensity towards helical formation, supporting this hypothesis."
+  },
+  "608": {
+    "hypothesized_motif": "Charged Turn Motif",
+    "description": "This motif represents a turn region characterized by a charged or polar central residue, potentially involved in protein-protein interactions.",
+    "reasoning": "The sequence window contains a central aspartic acid (D) residue that is negatively charged, surrounded by a mix of polar and hydrophobic residues like V, R, S, and L. This pattern suggests a potential surface-exposed turn structure where the charge at the central residue could facilitate interactions or binding events."
+  },
+  "716": {
+    "hypothesized_motif": "Charged Beta-Turn",
+    "description": "A motif consisting of a region likely to form a beta-turn due to glycine presence and flanked by charged residues.",
+    "reasoning": "The central glycine (G) residue, a common beta-turn initiator, suggests a propensity for a beta-turn, while the surrounding charged residues (e.g., E, K, Q) could provide stability or specificity, indicating a potential charged beta-turn motif."
+  },
+  "989": {
+    "hypothesized_motif": "Central Hydrophobic Core",
+    "description": "A motif characterized by a central hydrophobic residue flanked by polar residues, possibly involved in buried core stabilization.",
+    "reasoning": "Both sequence windows have a hydrophobic residue (H in the first and N in the second) centrally located within a surrounding context of polar and potentially reactive residues, which might suggest a pattern where hydrophobic residues are crucial for core stability within a predominantly polar environment or serve a specific function in orientation within a structural domain."
+  },
+  "RANDOM_BASELINE": {
+    "hypothesized_motif": "Proline-Induced Structural Disruption",
+    "description": "This motif likely represents a structural kink or disruption in an alpha-helix or beta-strand caused by the presence of proline, which disrupts regular secondary structures due to its rigid ring structure.",
+    "reasoning": "The single sequence window indicates a proline residue at the activation site. Proline is well-known for introducing kinks in alpha-helices or disrupting beta-strands due to its cyclic structure, which restricts backbone flexibility. The presence of adjacent hydrophobic (leucine, valine) and charged (aspartic acid, glutamic acid) residues suggests that this disruption could be significant in facilitating a functional transition or interaction site."
+  }
+}

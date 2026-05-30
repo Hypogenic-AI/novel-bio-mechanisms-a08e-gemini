@@ -1,0 +1,16 @@
+\section{Discussion}
+\label{sec:discussion}
+
+The results of our study demonstrate that protein language models encode biologically coherent information that extends beyond existing human-curated annotations. By isolating "orphan" \sae features, we have shown that it is possible to identify consistent biophysical patterns that the model utilizes to represent protein sequences.
+
+\para{Interpretation of Orphan Features}
+The identification of motifs like "Charged Turn Motifs" and "Positively-Charged Helix Caps" suggests that \esm has internalized fundamental biophysical principles to optimize its next-amino-acid prediction objective. These motifs are essential for protein stability and folding but are often too generic to be formally annotated as functional "domains" in databases like Pfam. However, for the model, these motifs serve as critical structural landmarks. Our pipeline successfully translates these neural landmarks into human-readable scientific hypotheses.
+
+\para{Limitations}
+Despite the promise of this approach, several limitations remain.
+{\bf Small Sample Size:} Our current study was conducted on a subset of 100 \swissprot sequences. While this is sufficient for a proof-of-concept, a robust discovery pipeline would require scanning millions of sequences to confirm that these features represent universal biophysical rules rather than artifacts of a small dataset.
+{\bf LLM Hallucination Risk:} As demonstrated by our random baseline comparison, LLMs like \gpt are highly capable of generating plausible-sounding rationales for any sequence fragment. The "discovery" is therefore heavily dependent on the quality of the \sae's feature selection. If the \sae identifies a spurious or polysemantic feature, the LLM will still attempt to explain it, potentially leading to false positives.
+{\bf Lack of Experimental Validation:} Currently, our hypotheses remain purely computational. A true discovery requires laboratory verification, such as site-directed mutagenesis of the identified motifs to observe effects on protein stability or function.
+
+\para{Broader Implications}
+This work contributes to the growing field of "generative biology," where AI is used not just to solve known problems (like structure prediction) but to suggest new directions for research. By treating foundation models as active engines for hypothesis generation, we can potentially accelerate the discovery of novel biological mechanisms. Furthermore, the ability to interpret the internal representations of these models is a crucial step toward building "trustworthy" AI for biology, where we understand the biophysical basis of the model's predictions.

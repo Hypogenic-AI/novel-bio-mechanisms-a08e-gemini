@@ -1,0 +1,13 @@
+\section{Related Work}
+\label{sec:related_work}
+
+Our work sits at the intersection of protein language modeling, mechanistic interpretability, and the use of large language models for scientific discovery.
+
+\para{Protein Language Models}
+The development of \plms has been driven by the success of transformer architectures in natural language processing. Models like \esm \cite{lin2022esm2} and ProtBERT are trained on massive repositories of protein sequences using masked language modeling. These models have been shown to capture evolutionary information, structural constraints, and functional sites in their hidden states. While their utility for downstream tasks like structure prediction and variant effect prediction is well-documented, our work focuses on the internal knowledge these models possess that has not yet been translated into external tasks.
+
+\para{Mechanistic Interpretability for Biology}
+Mechanistic interpretability aims to understand the internal components of neural networks and how they contribute to model behavior. In the context of \plms, recent work has applied Sparse Autoencoders (\saes) to decompose the residual streams of models into monosemantic features. \citet{simon2024interplm} introduced \interplm, showing that \saes can resolve the "superposition" problem, where a single neuron represents multiple unrelated concepts. Similarly, \citet{adams2025mechanistic} demonstrated that \sae features can correspond to known sequence determinants like thermostability or binding motifs. Building on these foundations, we extend the use of \saes from validation to discovery, specifically targeting features that do not align with known annotations.
+
+\para{LLMs for Scientific Discovery}
+The use of LLMs to assist in scientific reasoning is an emerging field. LLMs have been used to summarize literature, suggest experiment designs, and even propose new molecular structures. In biology, LLMs are increasingly being used to "read" protein sequences and provide functional descriptions. Our work complements this trend by using LLMs as a "biochemist-in-the-loop" to interpret the specific sequence windows identified by \saes. Unlike previous approaches that use LLMs for general sequence analysis, we use them to specifically explain the latent features discovered through mechanistic interpretability, providing a semantic bridge between neural activations and biological hypotheses.

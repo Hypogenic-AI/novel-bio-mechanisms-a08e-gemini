@@ -1,0 +1,27 @@
+{
+  "success": true,
+  "stages": {
+    "resource_finder": {
+      "success": true,
+      "completion_marker": "/workspaces/novel-bio-mechanisms-a08e-gemini/.resource_finder_complete",
+      "outputs": {
+        "literature_review": "/workspaces/novel-bio-mechanisms-a08e-gemini/literature_review.md",
+        "resources_catalog": "/workspaces/novel-bio-mechanisms-a08e-gemini/resources.md",
+        "papers_dir": "/workspaces/novel-bio-mechanisms-a08e-gemini/papers",
+        "datasets_dir": "/workspaces/novel-bio-mechanisms-a08e-gemini/datasets",
+        "code_dir": "/workspaces/novel-bio-mechanisms-a08e-gemini/code"
+      },
+      "log_file": "/workspaces/novel-bio-mechanisms-a08e-gemini/logs/resource_finder_gemini.log",
+      "transcript_file": "/workspaces/novel-bio-mechanisms-a08e-gemini/logs/resource_finder_gemini_transcript.jsonl",
+      "elapsed_time": 726.8034772872925
+    },
+    "experiment_runner": {
+      "success": true,
+      "return_code": 0,
+      "elapsed_time": 271.6142499446869,
+      "log_file": "/workspaces/novel-bio-mechanisms-a08e-gemini/logs/execution_gemini.log",
+      "transcript_file": "/workspaces/novel-bio-mechanisms-a08e-gemini/logs/execution_gemini_transcript.jsonl"
+    }
+  },
+  "work_dir": "/workspaces/novel-bio-mechanisms-a08e-gemini"
+}

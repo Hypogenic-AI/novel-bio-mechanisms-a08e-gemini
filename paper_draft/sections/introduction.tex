@@ -1,0 +1,19 @@
+\section{Introduction}
+\label{sec:intro}
+
+The emergence of foundation models for biology, particularly protein language models (\plms) like \esm \cite{lin2022esm2}, has fundamentally shifted the landscape of structural biology and protein engineering. These models are trained on billions of protein sequences, learning a compressed representation of the evolutionary and biophysical constraints that govern life at the molecular level. However, despite their predictive prowess, \plms remain "black boxes" whose internal logic is difficult to decipher. Understanding what these models have learned is not merely a matter of academic curiosity; it is a prerequisite for safely and effectively engineering novel proteins with desired functions.
+
+{\bf Why does interpretability matter for biology?} Current efforts in mechanistic interpretability for \plms primarily focus on "explaining" the model by mapping its latent features to human-curated databases like \uniprot or Pfam \cite{simon2024interplm, adams2025mechanistic}. While this validates that models learn known biology, it misses a critical opportunity: foundation models likely capture complex biological patterns that have not yet been formally identified or annotated by humans. If we assume that \plms learn a robust model of biology to succeed at their training objectives, then their unexplained internal representations might correspond to real, undiscovered biological mechanisms.
+
+However, a significant gap exists in the field. Most interpretability frameworks are retrospective, aiming to confirm existing knowledge rather than prospectively discovering new concepts. There is a lack of systematic pipelines that can isolate "orphan" features—those that are monosemantic and highly active but lack correlation with known annotations—and translate their sequence contexts into testable biological hypotheses. Without such a bridge, the latent knowledge within \plms remains trapped in high-dimensional space.
+
+In this paper, we propose a pipeline for discovering novel biological mechanisms by treating \plms as hypothesis generators (see \figref{fig:method}). We utilize Sparse Autoencoders (\saes) to decompose the activations of \esm into thousands of interpretable features. By filtering for features with high activation variance but low alignment with existing \swissprot metadata, we isolate candidates for novel biological motifs. We then uniquely employ \gpt to semantically interpret the amino acid windows corresponding to these features, generating human-readable biophysical hypotheses.
+
+Our results demonstrate that \sae-extracted features can indeed capture coherent biophysical patterns that are not explicitly annotated. For instance, we identify features that activate specifically on charged turn motifs and helix caps across diverse sequences. When compared to a random baseline, our pipeline produces hypotheses that are significantly more coherent and specific, with the \gpt-driven interpretation revealing structural logic that aligns with established biophysical rules despite the absence of formal annotations.
+
+Our main contributions are as follows:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We present an automated pipeline for biological discovery that integrates \sae-based feature extraction with \gpt-aided semantic interpretation.
+    \item We identify and characterize several "orphan" features in \esm that correspond to biologically plausible, yet unannotated, structural motifs.
+    \item We provide a critical analysis of the role of \plms in hypothesis generation, demonstrating that their internal representations can reveal biophysical abstractions beyond current human curation.
+\end{itemize}

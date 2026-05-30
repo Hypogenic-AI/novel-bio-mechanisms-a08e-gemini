@@ -1,0 +1,491 @@
+You are an academic paper writer. Generate a complete NEURIPS style paper
+based on the experiment results provided.
+
+════════════════════════════════════════════════════════════════════════════════
+                         IMPORTANT: BEFORE YOU START
+════════════════════════════════════════════════════════════════════════════════
+
+Before writing any content, you MUST complete these steps:
+
+1. READ THE SKILL: Review the paper-writer skill at .gemini/skills/paper-writer/SKILL.md
+2. READ THE STYLE GUIDE: Study templates/paper_writing/lab_style_guide.md carefully
+3. REVIEW EXAMPLES: Browse paper_examples/ for formatting and language patterns:
+   - Look at sections/1.introduction.tex for language style
+   - Look at tables/*.tex for table formatting
+   - Look at commands/*.tex for macro usage
+4. VERIFY COMMAND TEMPLATES: Command templates (math.tex, general.tex, macros.tex) are pre-copied to paper_draft/commands/
+
+CRITICAL: Reference example papers for FORMATTING and LANGUAGE STYLE only.
+Do NOT copy content, phrasing, or narrative structure from the example papers.
+The examples are in a different research domain - focus only on presentation style.
+
+════════════════════════════════════════════════════════════════════════════════
+                            EXPERIMENT REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+# Discovering Novel Biological Mechanisms from Protein Language Models
+
+## 1. Executive Summary
+This research explores whether protein language models (pLMs) contain internal representations that correspond to uncharacterized biological mechanisms. By employing Sparse Autoencoders (SAEs) on ESM-2 embeddings, we successfully extracted monosemantic features and isolated those with highly specific activation patterns. Utilizing large language models (LLMs) to interpret the local sequence contexts of these "orphan" features, we generated explicit, biologically plausible hypotheses—such as novel "Charged Turn Motifs" and "Positively-Charged Helix Caps." This demonstrates a viable pipeline for treating foundation models not merely as predictive tools, but as active generators of scientific hypotheses.
+
+## 2. Research Question & Motivation
+**Research Question:** Can sparse autoencoder (SAE) features of protein language models (pLMs) reveal biologically meaningful motifs that are currently unannotated in standard databases?
+
+**Motivation:** Protein language models like ESM-2 have revolutionized structural biology, but their internal representations are largely opaque. Existing mechanistic interpretability studies focus on explaining model behavior by mapping latent features to known biological annotations. However, the true potential of these models lies in their ability to capture complex biology that humans have not yet curated. By explicitly translating unexplained, high-variance latent features into testable biological hypotheses, this research bridges the gap between AI interpretability and biological discovery.
+
+## 3. Methodology
+
+### Approach
+We adopted a pipeline integrating the `InterPLM` framework (Simon & Zou, 2024) to extract SAE representations from ESM-2. We analyzed a subset of manually-curated Swiss-Prot sequences. Features with high activation peaks but low widespread frequency were selected as candidates for novel motif discovery. We then used OpenAI's GPT-4o to analyze the local sequence contexts of these features and propose biochemical or structural hypotheses.
+
+### Experimental Setup
+- **Base Model:** ESM-2 (facebook/esm2_t6_8M_UR50D, 8M parameters), Layer 4.
+- **Sparse Autoencoder:** Pre-trained SAE for ESM-2 layer 4, provided by the InterPLM repository.
+- **Dataset:** A subset of 100 sequences derived from the Swiss-Prot database.
+- **LLM API:** OpenAI GPT-4o (temperature=0.2 for deterministic formatting, `json_object` response format).
+- **Protocol:** 
+  1. Embed sequences using ESM-2.
+  2. Pass embeddings through the SAE to obtain sparse feature activations.
+  3. Compute maximum activation and activation frequency across all sequences for each feature.
+  4. Select the top 5 features with the highest maximum activations and low overall frequency (< 90%).
+  5. Extract a 20-amino-acid window around the peak activation site for each selected feature.
+  6. Prompt GPT-4o to analyze the sequences and hypothesize a corresponding biochemical motif.
+
+## 4. Results
+
+Our pipeline successfully executed on the Swiss-Prot subset, identifying several highly active features. The top 5 features identified were:
+
+| Feature Index | Max Activation | Frequency (>0.1) |
+|---------------|----------------|-------------------|
+| 4383          | 2.32           | 0.01              |
+| 9934          | 1.33           | 0.01              |
+| 608           | 1.30           | 0.01              |
+| 716           | 1.25           | 0.01              |
+| 989           | 1.09           | 0.02              |
+
+### LLM-Generated Hypotheses for SAE Features
+
+**Feature 4383**
+- *Context peak:* `EKGKQSGIIG[A]SLDGTNPAL`
+- *Hypothesized Motif:* **Charged Turn Motif**
+- *LLM Reasoning:* "The sequence window contains multiple charged residues (E, K, Q) surrounding the peak activation site, suggesting a propensity for forming a turn or flexible region due to charge interactions."
+
+**Feature 9934**
+- *Context peak:* `DANAEIEILR[S]RMVVGKAVD`
+- *Hypothesized Motif:* **Positively-Charged Helix Cap**
+- *LLM Reasoning:* "The sequence features a prominent positively-charged arginine (R), which is a well-known helix former and stabilizer when at or near a capping position."
+
+**Feature 716**
+- *Context peak:* `EKGKQSGIIG[A]SLDGTNPAL`
+- *Hypothesized Motif:* **Charged Beta-Turn**
+- *LLM Reasoning:* "The central glycine (G) residue, a common beta-turn initiator, suggests a propensity for a beta-turn, while the surrounding charged residues (e.g., E, K, Q) could provide stability."
+
+**Random Baseline Comparison**
+When provided with a randomly selected sequence window `NPTGLKASLS[P]QRELRAQG` with a fabricated high activation score, the LLM hypothesized a "Proline-Induced Structural Disruption." This demonstrates the LLM's capacity to infer structural logic from any sequence, highlighting the necessity of verifying whether SAE-selected windows share statistically significant motifs compared to random sequences.
+
+*Raw outputs and sequence alignments are available in `results/hypotheses.json`.*
+
+## 5. Analysis & Discussion
+
+The results demonstrate that treating an LLM as a "biochemist-in-the-loop" to interpret pLM features is technically viable. For the highly activating features (e.g., Feature 4383 and 716), the LLM consistently identified coherent biophysical properties (such as charged regions flanking a flexible core) that could represent functional motifs.
+
+Interestingly, Features 4383 and 716 both peaked on the same sequence `EKGKQSGIIG[A]SLDGTNPAL`, but generated slightly different conceptual hypotheses (Charged Turn Motif vs Charged Beta-Turn). This highlights a known property of SAEs: they sometimes learn multiple correlated features representing slight variations of the same underlying concept (feature splitting).
+
+While the LLM's hypotheses are plausible, the random baseline test reveals a critical insight: an advanced LLM will confidently hallucinate a biological motif for *any* sequence fragment based on standard biophysical rules (e.g., seeing a Proline and assuming a kink). Therefore, the actual "discovery" relies entirely on the SAE's ability to consistently activate *only* on instances of true, conserved mechanisms. 
+
+## 6. Limitations
+
+- **Small Sample Size:** To ensure end-to-end execution, the experiment was run on a 100-sequence subset. A full study requires scanning millions of sequences to confirm feature universality.
+- **LLM Hallucination Risk:** As shown by the random baseline, the LLM will provide a biophysical rationale regardless of whether the pattern is a true evolutionary motif.
+- **Missing Explicit Annotation Correlation:** While we selected features with high variance, we did not formally cross-reference them against UniProt to verify they were strictly "novel." True discovery requires proving the absence of existing literature for the identified motif.
+
+## 7. Conclusions & Next Steps
+
+This research establishes a proof-of-concept pipeline for generative biological discovery using pLMs and SAEs. By isolating specific latent features and leveraging LLMs to interpret their sequence contexts, we successfully generated human-readable hypotheses for internal model representations. 
+
+**Next Steps:**
+1. Scale the feature extraction to the full Swiss-Prot database.
+2. Implement a strict exclusion filter to remove any SAE features that correlate highly (>0.2) with known UniProt/Pfam annotations.
+3. Use laboratory experiments (e.g., mutation studies) to validate whether disrupting the sequence windows of these "orphan" features empirically alters protein stability or function as hypothesized by the LLM.
+
+## References
+1. Simon, E., & Zou, J. (2024). *InterPLM: discovering interpretable features in protein language models via sparse autoencoders.* Nature Methods.
+2. Adams, E., et al. (2025). *From Mechanistic Interpretability to Mechanistic Biology.*
+3. Lin, Z., et al. (2022). *ESM-2: Evolutionary-scale prediction of atomic-level protein structure with a language model.* Science.
+
+════════════════════════════════════════════════════════════════════════════════
+                            RESEARCH PLAN
+════════════════════════════════════════════════════════════════════════════════
+
+## Motivation & Novelty Assessment
+
+### Why This Research Matters
+Protein language models (pLMs) encode complex biological information, but their internal representations remain largely opaque. By treating these models as hypothesis generators rather than mere predictors, we can uncover new biological motifs and mechanisms. This is critical for advancing protein engineering and deepening our understanding of biology beyond current human-curated annotations.
+
+### Gap in Existing Work
+Existing mechanistic interpretability studies on pLMs typically map latent representations back to known functional annotations (like UniProt or Pfam). The field currently lacks systematic pipelines to analyze highly active, context-specific latent features that *do not* map to any known biology, and to explicitly use them to formulate novel, testable biological hypotheses.
+
+### Our Novel Contribution
+We propose an automated pipeline that leverages Sparse Autoencoders (SAEs) on ESM-2 to identify "orphan" latent features—those with strong, sequence-specific activations but poor correlation with existing databases. We then uniquely employ LLMs (e.g., Claude/GPT-4) to semantically interpret the sequence contexts of these novel features and generate explicit hypotheses regarding uncharacterized structural motifs or interaction sites.
+
+### Experiment Justification
+- **Experiment 1 (Feature Extraction):** Required to obtain interpretable latent representations of the protein sequences using ESM-2 and an SAE.
+- **Experiment 2 (Annotation Alignment):** Necessary to filter out features that correspond to known biological annotations (Swiss-Prot/UniProt), isolating the "orphan" features.
+- **Experiment 3 (LLM Hypothesis Generation):** Essential to conceptually translate the sequence contexts of these novel features into meaningful, testable biological hypotheses.
+
+## Research Question
+Can Sparse Autoencoder (SAE) features of Protein Language Models (pLMs) reveal and help describe biologically meaningful motifs that are currently unannotated in standard databases?
+
+## Background and Motivation
+Despite their predictive success, pLMs operate as black boxes. Mechanistic interpretability through SAEs has shown promise in making pLM features understandable. If we assume pLMs learn a robust model of biology, their unexplained representations might correspond to real, but undiscovered, biological mechanisms. Harnessing these internal representations could accelerate scientific discovery.
+
+## Hypothesis Decomposition
+1. ESM-2 representations encode functional properties not captured by Swiss-Prot or Pfam.
+2. Sparse autoencoders can disentangle these properties into isolated, monosemantic features.
+3. Features that frequently activate on unannotated regions possess conserved sequence or structural patterns.
+4. Large Language Models can recognize patterns in the sequence windows corresponding to these orphan features to suggest new functional hypotheses.
+
+## Proposed Methodology
+
+### Approach
+We will leverage the existing `InterPLM` framework to process a subset of 1,000 Swiss-Prot sequences through ESM-2 (8M parameters) and an associated pre-trained SAE. We will then correlate the SAE activations with known UniProt annotations, isolate features with high activation variance but low annotation correlation, and use an LLM API to interpret their highest-activating contexts.
+
+### Experimental Steps
+1. **Data Prep:** Load the `subset_1000.fasta` from the `datasets/uniprot/` directory.
+2. **Feature Extraction:** Use `InterPLM`'s pre-trained SAE for `esm2-8m` to obtain feature activations for all amino acids in the sequence subset.
+3. **Annotation Check:** Implement a correlation check between feature activations and existing UniProt annotations to define "known" vs "novel" features.
+4. **LLM Hypothesis Generation:** For the top 5 "novel" features, extract the 20 amino-acid window around the peak activation in the top 10 sequences. Send these sequences to an LLM API to hypothesize common biological properties (e.g., charge, hydrophobicity patterns).
+
+### Baselines
+Randomly selected 20-amino-acid windows from the dataset will be fed to the LLM to verify whether the hypothesis generated for SAE features is significantly more coherent and specific than chance.
+
+### Evaluation Metrics
+- **Sparsity:** L0 norm of the SAE activations.
+- **Alignment Score:** Correlation coefficient between feature activations and known UniProt properties.
+- **Hypothesis Coherence:** Qualitative and quantitative (LLM self-evaluated) coherence of the proposed biological mechanisms against the random baseline.
+
+### Statistical Analysis Plan
+We will compare the distribution of alignment scores to identify the threshold for "unannotated." We will also conduct a paired comparison of LLM confidence/coherence scores for SAE-driven hypotheses vs. random-window hypotheses.
+
+## Expected Outcomes
+We expect to find a subset of SAE features that activate consistently across diverse proteins but have near-zero correlation with existing UniProt metadata. We expect the LLM to successfully propose plausible, shared biochemical motifs for these features, outperforming random baselines.
+
+## Timeline and Milestones
+- **Setup & Data (20 min):** Environment configuration, data loading.
+- **Implementation (45 min):** Integration of InterPLM, extraction pipeline, annotation correlation logic.
+- **Experimentation (45 min):** Running extraction, identifying novel features, running LLM prompts.
+- **Analysis (30 min):** Comparing LLM outputs, formatting results.
+- **Documentation (30 min):** Compiling REPORT.md and README.md.
+
+## Potential Challenges
+- **Compute constraints:** If processing 1000 sequences is too slow, we will further subset to 100 sequences for fast iteration.
+- **LLM Hallucinations:** LLMs might hallucinate biological meaning in random sequences. The random baseline is crucial for mitigating this.
+- **Missing Annotations:** "Novel" features might just be known features missing from our specific annotation subset.
+
+## Success Criteria
+1. Successful extraction of SAE features for the dataset.
+2. Identification of at least 5 "orphan" features with high activation but low annotation correlation.
+3. Generation of coherent, testable hypotheses for these features via an LLM, showing clear distinction from random baselines.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          LITERATURE REVIEW
+════════════════════════════════════════════════════════════════════════════════
+
+# Literature Review: Discovering Novel Biological Mechanisms from Protein Language Models
+
+## Research Area Overview
+The field of protein language models (pLMs) has advanced rapidly, with models like ESM-2 demonstrating the ability to capture complex biological information from sequences alone. However, these models are often treated as "black boxes." Recent research has pivoted towards **Mechanistic Interpretability**, specifically using **Sparse Autoencoders (SAEs)** to decompose the high-dimensional internal representations of pLMs into human-interpretable features. The hypothesis is that these latent features may correspond to biological mechanisms that are currently unknown or unannotated.
+
+## Key Papers
+
+### 1. InterPLM: Discovering Interpretable Features in Protein Language Models via Sparse Autoencoders
+- **Authors**: Elana Simon, James Y. Zou
+- **Year**: 2024 (Nature Methods 2025)
+- **Key Contribution**: Introduces a framework to extract and analyze interpretable features from ESM-2 using SAEs.
+- **Methodology**: Trains SAEs on ESM-2 embeddings to identify thousands of latent features. Uses an LLM-based pipeline to automatically interpret features that do not map to known annotations.
+- **Datasets Used**: UniRef50 (training), Swiss-Prot (evaluation).
+- **Results**: Discovered that PLMs represent concepts in superposition. Identified novel, coherent concepts that do not map to existing annotations.
+- **Relevance**: Provides the primary methodology and visualization tools (InterPLM.ai) for this research.
+
+### 2. From Mechanistic Interpretability to Mechanistic Biology
+- **Authors**: Etowah Adams, Liam Bai, Minji Lee, Yiyang Yu, Mohammed AlQuraishi
+- **Year**: 2024/2025
+- **Key Contribution**: Focuses on bridging the gap between model interpretability and biological discovery.
+- **Methodology**: Similar SAE-based approach on ESM-2's residual stream. Characterizes features as "generic" vs. "family-specific."
+- **Results**: Demonstrated that known sequence determinants (e.g., thermostability) can be identified. Proposed a hypothesis-generation pipeline for unknown mechanisms.
+- **Relevance**: Directly supports the research hypothesis by showing how SAE features can be used to generate biological hypotheses.
+
+### 3. ESM-2: Evolutionary-scale prediction of atomic-level protein structure with a language model
+- **Authors**: Lin et al. (Meta AI)
+- **Year**: 2022
+- **Key Contribution**: Established the ESM-2 model as a state-of-the-art pLM.
+- **Methodology**: Large-scale transformer trained on UniRef50.
+- **Results**: Showed that internal representations contain enough information to predict 3D structure with high accuracy.
+- **Relevance**: The foundational model upon which the interpretability studies are built.
+
+## Common Methodologies
+- **Sparse Autoencoders (SAEs)**: Used to solve the "superposition" problem in neural networks, allowing for the extraction of monosemantic (interpretable) features.
+- **Linear Probing**: Used to verify if specific biological properties (like binding sites) are linearly encoded in the embeddings or SAE features.
+- **LLM-aided Interpretation**: Using large language models to describe the biological patterns captured by novel SAE features.
+
+## Evaluation Metrics
+- **Reconstruction Fidelity**: How well the SAE can reconstruct the original embedding.
+- **Sparsity (L0 norm)**: Number of active features per protein.
+- **Concept Alignment**: Correlation between feature activations and known biological annotations (e.g., from UniProt).
+
+## Datasets in the Literature
+- **UniRef50/100**: Standard for training large pLMs.
+- **Swiss-Prot**: The gold standard for high-quality, manually curated annotations.
+- **ProteinGym**: Used for evaluating the impact of mutations on function.
+
+## Gaps and Opportunities
+- **Verification of Novel Motifs**: While SAEs identify "novel" features, experimental validation is still largely missing.
+- **Cross-Model Consistency**: Do different models (e.g., ESM vs. ProtBert) learn the same "novel" mechanisms?
+- **Dynamic Mechanisms**: Most current work focuses on static sequences; capturing conformational changes or dynamic interactions remains a challenge.
+
+## Recommendations for Our Experiment
+- **Primary Method**: Use the `InterPLM` framework to train or load pre-trained SAEs for ESM-2.
+- **Primary Dataset**: Use `Swiss-Prot` for its rich annotations to differentiate between "known" and "novel" features.
+- **Focus**: Targeted analysis of features that correlate strongly with function but have low overlap with existing Pfam/UniProt domains.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          PAPER REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+Generate a complete academic paper with the following structure:
+
+1. TITLE
+   - Clear, specific, informative
+   - Should convey main finding or contribution
+
+2. AUTHOR
+   - Use this exact author line in the \author{} block: Chenhao Tan and NeuriCo
+
+3. ABSTRACT (150-250 words)
+   - Problem statement
+   - Approach
+   - Key results
+   - Significance
+
+4. INTRODUCTION
+   - Research problem and motivation
+   - Gap in existing work
+   - Our contribution (be specific)
+   - Paper organization
+
+5. RELATED WORK
+   - Organized by theme/approach
+   - Position our work relative to prior work
+   - Cite papers from literature review
+
+6. METHODOLOGY
+   - Clear description of approach
+   - Experimental setup
+   - Datasets used
+   - Evaluation metrics
+   - Baselines
+
+7. RESULTS
+   - Present results with tables and figures
+   - Statistical analysis
+   - Comparison to baselines
+   - Ablation studies (if applicable)
+
+8. DISCUSSION
+   - Interpretation of results
+   - Limitations
+   - Broader implications
+
+9. CONCLUSION
+   - Summary of contributions
+   - Key findings
+   - Future work
+
+10. REFERENCES
+   - BibTeX format
+   - All cited papers
+
+════════════════════════════════════════════════════════════════════════════════
+                          OUTPUT FORMAT
+════════════════════════════════════════════════════════════════════════════════
+
+Create a MODULAR LaTeX project with the following directory structure:
+
+paper_draft/
+├── main.tex              # Main file that imports all sections
+├── references.bib        # BibTeX references
+├── sections/
+│   ├── abstract.tex      # Abstract content
+│   ├── introduction.tex  # Introduction section
+│   ├── related_work.tex  # Related work section
+│   ├── methodology.tex   # Methodology section
+│   ├── results.tex       # Results section
+│   ├── discussion.tex    # Discussion section
+│   └── conclusion.tex    # Conclusion section
+├── figures/              # Directory for any generated figures
+├── tables/               # Directory for complex standalone tables
+└── appendix/             # Directory for appendix sections (if needed)
+
+INSTRUCTIONS:
+1. First, create the directory structure above (mkdir -p paper_draft/sections paper_draft/figures paper_draft/tables paper_draft/appendix)
+2. Write main.tex using the EXACT preamble for NEURIPS:
+
+   \documentclass{article}
+   \usepackage[final]{neurips_2025}  % NEURIPS style (neurips_2025.sty is in paper_draft/)
+   \usepackage[hidelinks]{hyperref}  % REQUIRED: clickable links
+   \usepackage{booktabs}  % REQUIRED: professional tables
+   \usepackage{graphicx}
+   \usepackage{amsmath,amssymb}
+
+   % Import command files
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+   % Use this bibliography style:
+   \bibliographystyle{plainnat}
+
+   \author{Chenhao Tan and NeuriCo}
+
+   - Use \input{sections/...} to include each section
+   - Use \bibliography{references} for references
+3. Write each section file with COMPLETE content (no placeholders)
+4. Each section file should include its \section{} command
+5. Write references.bib with all citations in BibTeX format
+6. After writing all files, compile the paper:
+   cd paper_draft && pdflatex -interaction=nonstopmode main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+
+This modular structure allows humans to easily:
+- Edit individual sections without navigating a large file
+- Track changes per section
+- Reuse sections across different paper versions
+
+════════════════════════════════════════════════════════════════════════════════
+                          QUALITY REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+- Academic tone throughout
+- All claims must be supported by data from the experiment report
+- Proper citations using \cite{} commands
+- Clear figures and tables with proper captions
+- NO placeholder text - every section must have real content
+- The paper MUST compile without errors
+- If compilation fails, debug and fix the LaTeX errors
+
+════════════════════════════════════════════════════════════════════════════════
+                          LAB WRITING STYLE
+════════════════════════════════════════════════════════════════════════════════
+
+Follow these lab-specific conventions to match our paper style:
+
+1. LANGUAGE STYLE:
+   - Use active voice: "We propose", "We examine", "We focus on"
+   - Be direct and confident: "Our main question is...", "We hypothesize that..."
+   - State things clearly and simply - prefer plain language over jargon
+   - Use bold questions as paragraph organizers: {\bf what is X?}
+   - Include specific quantitative claims: "8.97% over baseline"
+   - Avoid fancy wording: "utilize" → "use", "facilitate" → "help"
+
+2. INTRODUCTION STRUCTURE:
+   - Engaging hook (get to the point quickly)
+   - Problem importance
+   - Gap identification
+   - Your approach with method figure reference
+   - Quantitative preview of results
+   - Contribution bullets (3-4 items, action verbs)
+
+3. CONTRIBUTION LISTS:
+   \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+       \item We propose...
+       \item We conduct...
+       \item We complement...
+   \end{itemize}
+
+4. MODULAR COMMANDS STRUCTURE:
+   Command templates are pre-copied to paper_draft/commands/:
+   - math.tex: Math notation macros
+   - general.tex: Formatting macros
+   - macros.tex: Project-specific term definitions (customize this for your paper)
+
+   In main.tex, include:
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+5. REFERENCE CONVENTIONS:
+   Use reference macros from math.tex:
+   - \figref{fig:name} for "figure 1" (lowercase, in-sentence)
+   - \Figref{fig:name} for "Figure 1" (capitalized, start of sentence)
+   - \secref{sec:name} for "section 2"
+
+6. TEXT FORMATTING:
+   - Use \para{Header text} for bold paragraph headers
+   - Define method/dataset names with \textsc and \xspace:
+     \newcommand{\methodname}{\textsc{MethodName}\xspace}
+
+7. TABLE FORMATTING:
+   - Use booktabs package (no vertical lines)
+   - Use \resizebox{\textwidth}{!}{...} for wide tables
+   - Use @{} to remove padding at table edges
+   - Use \cmidrule(lr){x-y} for sub-headers
+   - Use \textsc{} for dataset/method names in headers
+   - Bold best results with {\bf ...}
+
+8. FIGURE FORMATTING:
+   - Use 0.32\textwidth for 3-column subfigures
+   - Use 0.95\linewidth for full-width figures
+   - Use \input{figures/legend} for shared legends
+   - Write self-contained captions explaining key observations
+
+9. RESULTS PRESENTATION:
+   - Define \increase and \decrease for colored arrows (green up, red down)
+   - Bold best results in tables
+   - Report confidence intervals when available
+
+10. ALGORITHM STYLING:
+    - Use algpseudocode with [noend]
+    - Use \triangleright for comments
+
+11. HYPERLINKS (REQUIRED):
+    - Always use \usepackage[hidelinks]{hyperref} or with colored links
+    - All citations, section refs, figure refs, table refs must be clickable
+    - This is essential for reader navigation
+
+════════════════════════════════════════════════════════════════════════════════
+                          WORKFLOW: REVIEW AND REFLECT
+════════════════════════════════════════════════════════════════════════════════
+
+Before calling finish, you MUST complete these review steps:
+
+1. REVIEW RESOURCES (at the start):
+   - Read .gemini/skills/paper-writer/SKILL.md for detailed guidance
+   - Study templates/paper_writing/lab_style_guide.md for style conventions
+   - Browse paper_examples/ for formatting and language patterns
+
+2. SELF-REFLECTION (before finishing):
+   After writing all sections, review your work against these criteria:
+
+   LANGUAGE CHECK:
+   - [ ] Is the writing clear and jargon-free?
+   - [ ] Are claims specific with quantitative support?
+   - [ ] Is active voice used throughout?
+
+   FORMATTING CHECK:
+   - [ ] Does main.tex include \input{commands/math}, \input{commands/general}, \input{commands/macros}?
+   - [ ] Is hyperref package included for clickable references?
+   - [ ] Do tables use booktabs (no vertical lines)?
+   - [ ] Are best results bolded in tables?
+   - [ ] Are figures/tables properly captioned?
+
+   STRUCTURE CHECK:
+   - [ ] Does introduction follow: hook → importance → gap → approach → preview → contributions?
+   - [ ] Are contribution bullets specific with action verbs?
+   - [ ] Does the paper compile without errors?
+
+3. FIX ISSUES:
+   - Address any issues found in the self-reflection
+   - Re-compile and verify the PDF looks correct
+
+Only after completing this review should you consider the paper finished.

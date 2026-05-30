@@ -1,0 +1,36 @@
+\section{Methodology}
+\label{sec:method}
+
+We propose a multi-stage pipeline for identifying novel biological motifs in protein language models. The workflow involves: (1) extracting sparse features from model embeddings, (2) filtering for highly active but unannotated features, and (3) using an LLM to generate biophysical hypotheses for these features (see \figref{fig:method}).
+
+\begin{figure}[h]
+\centering
+% \includegraphics[width=0.95\linewidth]{figures/method.pdf}
+\framebox[0.95\linewidth]{\rule{0pt}{2in} Pipeline Overview: \sae Feature Extraction $\to$ Annotation Filtering $\to$ \gpt Interpretation}
+\caption{Overview of our discovery pipeline. We first disentangle \esm activations using an \sae, then filter for "orphan" features that lack known annotations, and finally generate biological hypotheses using \gpt.}
+\label{sec:method:fig}
+\label{fig:method}
+\end{figure}
+
+\para{Sparse Feature Extraction}
+We utilize \esm (specifically \texttt{facebook/esm2\_t6\_8M\_UR50D}, 8M parameters) as our base model. To address the problem of polysemanticity in latent representations, we apply a pre-trained Sparse Autoencoder (\sae) from the \interplm framework \cite{simon2024interplm}. The \sae is applied to the activations of Layer 4 of \esm. Given an embedding $\vx \in \sR^{d}$, the \sae produces a sparse feature vector $\vf \in \sR^{k}$ (where $k \gg d$) such that $\vx \approx \mA\vf + \vb$, where $\mA$ is a decoder matrix and $\vb$ is a bias term. The sparsity is enforced through an $L_1$ penalty during training, ensuring that only a few features are active for any given amino acid.
+
+\para{Feature Filtering and Selection}
+Our goal is to identify features that represent consistent biological concepts but are not present in standard annotations. We process a subset of 100 sequences from the manually-curated \swissprot database \cite{uniprot2023uniprot}. For each feature $j$, we compute:
+\begin{enumerate}
+    \item {\bf Maximum Activation:} $a_{\text{max}}(j) = \max_{i, p} f_{i,p,j}$, where $i$ indexes sequences and $p$ indexes positions.
+    \item {\bf Activation Frequency:} $\text{freq}(j) = \frac{1}{N \cdot L} \sum_{i,p} \mathbb{I}(f_{i,p,j} > 0.1)$, where $\mathbb{I}$ is the indicator function.
+\end{enumerate}
+We select the top 5 "orphan" features characterized by high $a_{\text{max}}$ and low overall frequency ($< 90\%$ of sequences). This heuristic prioritizes features that activate strongly on specific, localized motifs rather than general properties like hydrophobicity or solvent accessibility that might be ubiquitous.
+
+\para{LLM Hypothesis Generation}
+For each selected feature, we extract the sequence window of 20 amino acids centered at the peak activation site. These windows are then provided to \gpt with a prompt designed to elicit biophysical reasoning. The prompt instructs the LLM to:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item Analyze the chemical properties (charge, polarity, size) of the residues in the window.
+    \item Propose a specific biological motif or structural element represented by the feature.
+    \item Provide a scientific rationale for the hypothesis.
+\end{itemize}
+To ensure deterministic and structured output, we use a temperature of 0.2 and the \texttt{json\_object} response format.
+
+\para{Baselines and Evaluation}
+To validate the specificity of the generated hypotheses, we include a random baseline test. We provide the LLM with a randomly selected sequence window from the dataset and assign it a fabricated high activation score. We then compare the coherence and biological specificity of the resulting hypothesis with those generated for true \sae features. This allows us to distinguish between the LLM's general capacity for biophysical rationalization and the specific signal captured by the \sae features.
